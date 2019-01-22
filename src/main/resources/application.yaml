@@ -1,0 +1,17 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /dinner-diary
+spring:
+  datasource:
+    username: dinner_diary
+    password: dinner_diary
+    url: jdbc:h2:mem:testdb
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true # workaround for SQLFeatureNotSupportedException: Method org.postgresql.jdbc.PgConnection.createClob() ...
+dd:
+  expiration-time-minutes: 10

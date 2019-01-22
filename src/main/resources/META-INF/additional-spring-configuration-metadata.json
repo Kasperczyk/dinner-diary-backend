@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "dd.expiration-time-minutes",
+      "type": "java.lang.Long",
+      "description": "The expiration time set on the JWT token in minutes."
+    }
+  ]
+}
