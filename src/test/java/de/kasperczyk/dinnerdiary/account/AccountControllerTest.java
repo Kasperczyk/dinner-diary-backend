@@ -6,8 +6,10 @@ import de.kasperczyk.dinnerdiary.TestDataFactory;
 import de.kasperczyk.dinnerdiary.error.AccountNotFoundException;
 import de.kasperczyk.dinnerdiary.error.ApiErrorDto;
 import de.kasperczyk.dinnerdiary.error.EmailAddressAlreadyInUseException;
+import de.kasperczyk.dinnerdiary.error.IncorrectPasswordException;
 import org.junit.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.rest.webmvc.json.patch.Patch;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
@@ -15,10 +17,8 @@ import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class AccountControllerTest extends AbstractMockMvcTest {
@@ -38,6 +38,7 @@ public class AccountControllerTest extends AbstractMockMvcTest {
                 .contentType(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(status().isCreated())
                 .andExpect(content().string(""));
+        verify(accountServiceMock).registerAccount(any(Account.class));
     }
 
     @Test
@@ -52,7 +53,7 @@ public class AccountControllerTest extends AbstractMockMvcTest {
     }
 
     @Test
-    public void register_returns400BadRequestAndApiError_whenRequestBodyIsInvalid() throws Exception {
+    public void register_returns400BadRequestAndApiErrorDto_whenRequestBodyIsInvalid() throws Exception {
         AccountDto accountDto = TestDataFactory.createDefaultTestAccountDto();
         accountDto.setUsername(null);
         mockMvc.perform(post(REQUEST_URL)
@@ -74,11 +75,62 @@ public class AccountControllerTest extends AbstractMockMvcTest {
     }
 
     @Test
-    public void getAccount_returns404NotFound_whenAccountIsNotFound() throws Exception {
+    public void getAccount_returns404NotFoundAndApiErrorDto_whenAccountIsNotFound() throws Exception {
         when(accountServiceMock.getAccount(ACCOUNT_ID)).thenThrow(AccountNotFoundException.class);
         mockMvc.perform(get(REQUEST_URL + PATH_PARAMETER, ACCOUNT_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(expectedApiErrorDto(HttpStatus.NOT_FOUND)));
+    }
+
+    @Test
+    public void deleteAccount_returns200Ok_whenAccountIsSuccessfullyDeleted() throws Exception {
+        doNothing().when(accountServiceMock).deleteAccount(ACCOUNT_ID);
+        mockMvc.perform(delete(REQUEST_URL + PATH_PARAMETER, ACCOUNT_ID))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void patchAccount_returns200Ok_whenUsernameAndEmailAddressAreSuccessfullyUpdated() throws Exception {
+        doNothing().when(accountServiceMock).patchUsernameAndEmailAddress(any(UUID.class), any(Patch.class), anyString());
+        mockMvc.perform(patch(REQUEST_URL + PATH_PARAMETER, ACCOUNT_ID)
+                .content("[{\"op\": \"replace\", \"path\": \"/username\", \"value\": \"Test\"}," +
+                          "{\"op\": \"replace\", \"path\": \"/emailAddress\", \"value\": \"kasperczyk.rene@test.com\"}]")
+                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void patchAccount_returns200Ok_whenPasswordIsSuccessfullyUpdated() throws Exception {
+        doNothing().when(accountServiceMock).patchPassword(any(UUID.class), any(Patch.class), anyString());
+        mockMvc.perform(patch(REQUEST_URL + PATH_PARAMETER, ACCOUNT_ID)
+                .param("currentPassword", "currentPassword")
+                .content("[{\"op\": \"replace\", \"path\": \"/password\", \"value\": \"newPassword\"}]")
+                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void patchAccount_returns400BadRequestAndApiErrorDto_whenRequestContainsMalformedJsonPatchBody() throws Exception {
+        doNothing().when(accountServiceMock).patchPassword(any(UUID.class), any(Patch.class), anyString());
+        mockMvc.perform(patch(REQUEST_URL + PATH_PARAMETER, ACCOUNT_ID)
+                .content("[{\"oops\" \"replace\", \"path\": \"/username\", \"value\": \"Test\"}," +
+                         "{\"op\": \"replace\", \"path\": \"/emailAddress\", \"value\": \"kasperczyk.rene@test.com\"}]")
+                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.httpStatusCode", is(400)))
+                .andExpect(jsonPath("$.httpStatus", is(HttpStatus.BAD_REQUEST.name())));
+    }
+
+    @Test
+    public void patchAccount_returns400BadRequestAndApiErrorDto_whenIncorrectPasswordIsPassed() throws Exception {
+        doThrow(IncorrectPasswordException.class).when(accountServiceMock).patchPassword(any(UUID.class), any(Patch.class), anyString());
+        mockMvc.perform(patch(REQUEST_URL + PATH_PARAMETER, ACCOUNT_ID)
+                .param("currentPassword", "currentPassword")
+                .content("[{\"op\": \"replace\", \"path\": \"/password\", \"value\": \"newPassword\"}]")
+                .contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.httpStatusCode", is(400)))
+                .andExpect(jsonPath("$.httpStatus", is(HttpStatus.BAD_REQUEST.name())));
     }
 
     private String expectedApiErrorDto(HttpStatus httpStatus) throws JsonProcessingException {

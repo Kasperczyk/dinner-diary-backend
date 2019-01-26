@@ -22,6 +22,16 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
         return new ResponseEntity<>(new ApiErrorDto(HttpStatus.NOT_FOUND.value(), HttpStatus.NOT_FOUND, e.getMessage()), HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(MalformedJsonPatchException.class)
+    public ResponseEntity<ApiErrorDto> handleMalformedJsonPatchException(MalformedJsonPatchException e) {
+        return new ResponseEntity<>(new ApiErrorDto(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST, e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IncorrectPasswordException.class)
+    public ResponseEntity<ApiErrorDto> handleIncorrectPasswordException(IncorrectPasswordException e) {
+        return new ResponseEntity<>(new ApiErrorDto(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST, e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         return new ResponseEntity<>(new ApiErrorDto(HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST, ex.getMessage()), HttpStatus.BAD_REQUEST);

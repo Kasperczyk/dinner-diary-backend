@@ -14,4 +14,4 @@ spring:
           lob:
             non_contextual_creation: true # workaround for SQLFeatureNotSupportedException: Method org.postgresql.jdbc.PgConnection.createClob() ...
 dd:
-  expiration-time-minutes: 10
+  expiration-time-minutes: 120

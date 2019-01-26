@@ -8,7 +8,7 @@ public class AccountNotFoundException extends RuntimeException {
         super("Account with email address '" + emailAddress + "' not found");
     }
 
-    public AccountNotFoundException(UUID id) {
-        super("Account with id '" + id + "' not found");
+    public AccountNotFoundException(UUID accountId) {
+        super("Account with id '" + accountId + "' not found");
     }
 }
