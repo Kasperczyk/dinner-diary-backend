@@ -32,10 +32,10 @@ and as a showcase of what I can do for possible future clients.
 ## How to run locally
 You basically have two options:
 1. use the default profile which uses H2 (which I only use for automated tests)
-2. install a local postgres server and create a 'dinner-diary' database for user 'dinner-diary' and password 'dinner-diary'
+2. install a local postgres server and create a 'dinner-diary' database for user 'dinner-diary' with password 'dinner-diary'
 
-In both cases flyway automatically created the schema.
-If you use the default profile with H2 keep in mind that you lose everything when you restart the backend (in memory database).
+In both cases flyway automatically creates the schema.
+If you use the default profile with H2 keep in mind that you lose your state when you restart the backend (in memory database).
 
 You can communicate with (i.e. send requests to) the backend via 'localhost:8080/dinner-diary'.
 
